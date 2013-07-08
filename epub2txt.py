@@ -3,6 +3,7 @@
 
 import os
 import sys
+import urllib
 import zipfile
 
 import xml.parsers.expat
@@ -93,7 +94,7 @@ class TocParser():
       self.stack.append(self.currentNP)
       self.toc.append(self.currentNP) 
     elif name == "content":
-      self.currentNP.content = attributes["src"]
+      self.currentNP.content = urllib.unquote(attributes["src"])
     elif name == "text":
       self.buffer = ""
       self.inText = 1
@@ -127,12 +128,14 @@ class epub2txt():
     file=zipfile.ZipFile(self.epub,"r");
     rootfile = ContainerParser(file.read("META-INF/container.xml")).parseContainer()
     title, author, ncx = BookParser(file.read(rootfile)).parseBook()
-    ops = rootfile.split("/")[0]
-    toc = TocParser(file.read(ops + "/" + ncx)).parseToc()
+    ops = "/".join(rootfile.split("/")[:-1])
+    if ops != "":
+      ops = ops+"/"
+    toc = TocParser(file.read(ops + ncx)).parseToc()
 
     fo = open("%s_%s.txt" % (title, author), "w")
     for t in toc:
-      html = file.read(ops + "/" + t.content.split("#")[0])
+      html = file.read(ops + t.content.split("#")[0])
       text = html2text.html2text(html.decode("utf-8"))
       #fo.write("*"*(t.level+1) + " " + t.text.encode("utf-8")+"\n")
       fo.write(t.text.encode("utf-8")+"{{{%d\n"%(t.level+1))
