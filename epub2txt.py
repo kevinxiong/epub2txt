@@ -1,9 +1,9 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
 import os
 import sys
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import zipfile
 
 import xml.parsers.expat
@@ -94,7 +94,7 @@ class TocParser():
       self.stack.append(self.currentNP)
       self.toc.append(self.currentNP) 
     elif name == "content":
-      self.currentNP.content = urllib.unquote(attributes["src"])
+      self.currentNP.content = urllib.parse.unquote(attributes["src"])
     elif name == "text":
       self.buffer = ""
       self.inText = 1
@@ -124,8 +124,8 @@ class epub2txt():
     self.epub = epubfile  
 
   def convert(self):
-    print "Processing %s ..." % self.epub
-    file=zipfile.ZipFile(self.epub,"r");
+    print("Processing %s ..." % self.epub)
+    file = zipfile.ZipFile(self.epub,"r");
     rootfile = ContainerParser(file.read("META-INF/container.xml")).parseContainer()
     title, author, ncx = BookParser(file.read(rootfile)).parseBook()
     ops = "/".join(rootfile.split("/")[:-1])
@@ -137,14 +137,17 @@ class epub2txt():
     for t in toc:
       html = file.read(ops + t.content.split("#")[0])
       text = html2text.html2text(html.decode("utf-8"))
-      #fo.write("*"*(t.level+1) + " " + t.text.encode("utf-8")+"\n")
-      fo.write(t.text.encode("utf-8")+"{{{%d\n"%(t.level+1))
-      fo.write(text.encode("utf-8")+"\n")
+      fo.write(text + "\n")
     fo.close()
     file.close()
 
+def usage():
+  print("Usage: epub2txt <path-to-epub>")
+
 if __name__ == "__main__":
-  if sys.argv[1]:
+  if(len(sys.argv) == 1 or sys.argv[1] == "help"):
+    usage()
+  elif sys.argv[1]:
     filenames = glob(sys.argv[1])
     for filename in filenames:
       epub2txt(filename).convert()
