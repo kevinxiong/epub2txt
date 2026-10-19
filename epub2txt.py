@@ -133,7 +133,7 @@ class epub2txt():
       ops = ops+"/"
     toc = TocParser(file.read(ops + ncx)).parseToc()
 
-    fo = open("%s_%s.txt" % (title, author), "w")
+    fo = open("%s_%s.txt" % (title, author), "w", encoding="utf-8")
     for t in toc:
       html = file.read(ops + t.content.split("#")[0])
       text = html2text.html2text(html.decode("utf-8"))
